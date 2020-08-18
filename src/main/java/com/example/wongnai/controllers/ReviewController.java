@@ -72,6 +72,13 @@ public class ReviewController {
         return reviews;
     }
 
+    @GetMapping(value = "/v1", params = "txt")
+    public List<Review> getByReviewPrimitive(@RequestParam String txt){
+        List<Review> reviews = reviewRepository.findByReviewContaining(txt);
+        return reviews;
+    }
+
+
     @PostMapping
     public Review create(@RequestBody Review req) {
         Review review = reviewRepository.save(req);

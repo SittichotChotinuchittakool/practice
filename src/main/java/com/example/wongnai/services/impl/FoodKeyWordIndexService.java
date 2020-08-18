@@ -41,20 +41,28 @@ public class FoodKeyWordIndexService extends InvertedIndex<String, Long, FoodKey
 
     @Override
     public void createHashMap() {
-        FoodKeywordQueue foodKeywordQueue = queue.poll();
-        state = InvertedIndexState.CREATE;
-        log.info("foodKeywordQueue={}", foodKeywordQueue);
-        if(foodKeywordQueue != null){
-            String keyword = foodKeywordQueue.getKeyword();
-            List<Long> ids = getListId(foodKeywordQueue.getReviews());
-            hashMap.put(keyword, ids);
+        log.info("queue.size={}", queue.size());
+        if(queue.size() > 0){
+            FoodKeywordQueue foodKeywordQueue = queue.poll();
+            state = InvertedIndexState.CREATE;
+            if(foodKeywordQueue != null){
+                String keyword = foodKeywordQueue.getKeyword();
+                List<Long> ids = getListId(foodKeywordQueue.getReviews());
+                hashMap.put(keyword, ids);
+            }else{
+                try{
+                    log.error("foodKeywordQueue is null");
+                    queue.remove();
+                }catch (NullPointerException er){
+                    log.error("queue is null={}", queue);
+                }
+            }
         }
-//        log.info("queue.remove={}", queue.remove());
     }
 
     @Override
     public void start() {
-        log.info("state={},hashset.size={},queue.size={}", state, hashMap.size(), queue.size());
+//        log.info("state={},hashset.size={},queue.size={}", state, hashMap.size(), queue.size());
         if (state.equals(InvertedIndexState.EMPTY)) {
             return;
         } else {
@@ -71,8 +79,17 @@ public class FoodKeyWordIndexService extends InvertedIndex<String, Long, FoodKey
     }
 
     public void addQueue(FoodKeywordQueue foodKeywordQueue) {
-        queue.add(foodKeywordQueue);
-        updateQueueState();
+        if(foodKeywordQueue != null) {
+            if(foodKeywordQueue.getReviews().size() > 0){
+                log.info("add foodKeywordQueue.getKeyword={}, size={}", foodKeywordQueue.getKeyword(), foodKeywordQueue.getReviews().size());
+                queue.add(foodKeywordQueue);
+                updateQueueState();
+            }else{
+                log.error("review is empty");
+            }
+        }else {
+            log.error("foodKeywordQueue={}", foodKeywordQueue);
+        }
     }
 
     private void updateQueueState() {
